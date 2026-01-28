@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+
+	xsi:schemaLocation="
+    http://www.springframework.org/schema/beans
+    https://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/tx
+    https://www.springframework.org/schema/tx/spring-tx.xsd
+    http://www.springframework.org/schema/context
+    https://www.springframework.org/schema/context/spring-context.xsd">
+
+	<context:component-scan base-package="com.service"></context:component-scan>
+	<tx:annotation-driven
+		transaction-manager="transactionManager" />
+	<bean id="myDataSource"
+		class="org.apache.commons.dbcp2.BasicDataSource">
+		<property name="driverClassName"
+			value="com.mysql.cj.jdbc.Driver"></property>
+		<property name="url" value="jdbc:mysql://localhost:3306/mydb"></property>
+		<property name="username" value="root"></property>
+		<property name="password" value="root"></property>
+	</bean>
+
+	<bean id="mySessionFactory"
+		class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+		<property name="dataSource" ref="myDataSource"></property>
+		<property name="mappingResources">
+			<set>
+				<value>mappings/product.hbm.xml</value>
+			</set>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">true</prop>
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+				<prop key="hibernate.current_session_context_class">
+					org.springframework.orm.hibernate5.SpringSessionContext
+				</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+		<property name="sessionFactory" ref="mySessionFactory"></property>
+	</bean>
+
+	<bean id="productDaoImpl" class="com.dao.impl.ProductDaoImpl">
+		<property name="sessionFactory" ref="mySessionFactory"></property>
+	</bean>
+
+	<bean id="productServiceImpl"
+		class="com.service.impl.ProductServiceImpl">
+		<property name="productDaoImpl" ref="productDaoImpl"></property>
+	</bean>
+
+	<bean id="product" class="com.model.Product">
+		<property name="id" value="101"></property>
+		<property name="title" value="MyProduct"></property>
+		<property name="category" value="Electric"></property>
+	</bean>
+</beans>
