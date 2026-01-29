@@ -1,0 +1,82 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="
+           http://www.springframework.org/schema/beans 
+           https://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/context 
+           https://www.springframework.org/schema/context/spring-context.xsd
+           http://www.springframework.org/schema/tx 
+           https://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!-- Enable annotation-based configuration (for @PersistenceUnit, @PersistenceContext, @Autowired, etc.) -->
+    <context:annotation-config/>
+
+    <!-- Enable context-wide load-time weaving -->
+ <!--    <context:load-time-weaver/> -->
+
+    <!-- Data sources -->
+    <bean id="myDataSource" class="org.apache.commons.dbcp2.BasicDataSource">
+        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://localhost:3306/mydb"/>
+        <property name="username" value="root"/>
+        <property name="password" value="root"/>
+    </bean>
+
+    <!-- EntityManagerFactory using LocalContainerEntityManagerFactoryBean -->
+    <bean id="emf" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+	<property name="dataSource" ref="myDataSource"></property>
+        <!-- Optional load-time weaver for JPA providers that require instrumentation -->
+      <!--   <property name="loadTimeWeaver">
+            <bean class="org.springframework.instrument.classloading.ReflectiveLoadTimeWeaver"/>
+        </property> -->
+
+        <!-- Optional bootstrap executor for background bootstrapping -->
+        <!-- <property name="bootstrapExecutor">
+            <bean class="org.springframework.core.task.SimpleAsyncTaskExecutor"/>
+        </property> -->
+
+        <!-- Optional: JpaVendorAdapter for Hibernate or EclipseLink -->
+        <property name="jpaVendorAdapter">
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+                <property name="generateDdl" value="true"/>
+                <property name="showSql" value="true"/>
+            </bean>
+        </property>
+
+        <!-- Optional JPA properties -->
+        <property name="jpaProperties">
+            <props>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+            </props>
+        </property>
+        
+        <property name="mappingResources">
+        	<list>
+        		<value>META-INF/orm.xml</value>
+        	</list>
+        </property>
+    </bean>
+
+    <!-- Shared EntityManager proxy for injection with @Autowired -->
+    <bean id="em" class="org.springframework.orm.jpa.support.SharedEntityManagerBean">
+        <property name="entityManagerFactory" ref="emf"/>
+    </bean>
+
+    <!-- Transaction manager for JPA -->
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <property name="entityManagerFactory" ref="emf"/>
+    </bean>
+
+    <!-- Enable annotation-driven transaction management -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <!-- Example DAO using @PersistenceContext or @Autowired -->
+    <bean id="myProductDao" class="com.dao.impl.ProductDaoImpl"/>
+    <bean id="myProductServiceImpl" class="com.service.impl.ProductServiceImpl">
+    	<property name="productDaoImpl" ref="myProductDao"></property>
+    </bean>
+    
+</beans>
